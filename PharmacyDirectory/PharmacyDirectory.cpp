@@ -20,17 +20,135 @@ struct Medicine {
 };
 
 
+
 // Добавление нового лекарства
 void addNewMedicine(vector<Medicine>& catalog) {
     Medicine med;
-    cout << "Введите название лекарства: ";
-    cin >> med.name;
-    cout << "Введите фирму-производителя: ";
-    cin >> med.company;
-    cout << "Введите страну-производителя: ";
-    cin >> med.country;
-    cout << "Введите назначение лекарства: ";
-    cin >> med.purpose;
+
+    while (true) {
+        cout << "Введите название лекарства: ";
+        cin.ignore(); // Очищаем буфер ввода
+        getline(cin, med.name); // Используем getline для ввода с пробелами
+
+        // Проверка на корректность названия лекарства
+        bool isValid = true;
+
+        // Проверка, что первое слово начинается с заглавной буквы
+        if (med.name.empty() || !isupper(med.name[0])) {
+            isValid = false;
+        }
+        else {
+            // Проверка на наличие недопустимых символов
+            for (char ch : med.name) {
+                if (!isalpha(ch) && ch != ' ') { // Допускаем только буквы и пробелы
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+
+        if (isValid) {
+            break; // Ввод корректен, выходим из цикла
+        }
+        else {
+            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы и не содержать цифр или специальных символов." << endl;
+        }
+    }
+
+
+
+    while (true) {
+        cout << "Введите название фирмы: ";
+        cin.ignore(); // Очищаем буфер ввода
+        getline(cin, med.company); // Используем getline для ввода с пробелами
+
+        // Проверка на корректность названия лекарства
+        bool isValid = true;
+
+        // Проверка, что первое слово начинается с заглавной буквы
+        if (med.company.empty() || !isupper(med.company[0])) {
+            isValid = false;
+        }
+
+        // Проверка на наличие недопустимых символов
+        for (char ch : med.company) {
+            if (!isalpha(ch) && ch != ' ') { // Допускаем только буквы и пробелы
+                isValid = false;
+                break;
+            }
+        }
+
+        if (isValid) {
+            break; // Ввод корректен, выходим из цикла
+        }
+        else {
+            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы и не содержать цифр или специальных символов." << endl;
+        }
+    }
+
+
+
+    while (true) {
+        cout << "Введите название страны: ";
+        cin.ignore(); // Очищаем буфер ввода
+        getline(cin, med.country); // Используем getline для ввода с пробелами
+
+        // Проверка на корректность названия лекарства
+        bool isValid = true;
+
+        // Проверка, что первое слово начинается с заглавной буквы
+        if (med.country.empty() || !isupper(med.country[0])) {
+            isValid = false;
+        }
+
+        // Проверка на наличие недопустимых символов
+        for (char ch : med.country) {
+            if (!isalpha(ch) && ch != ' ') { // Допускаем только буквы и пробелы
+                isValid = false;
+                break;
+            }
+        }
+
+        if (isValid) {
+            break; // Ввод корректен, выходим из цикла
+        }
+        else {
+            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы и не содержать цифр или специальных символов." << endl;
+        }
+    }
+
+
+    vector<string> validPurposes = {
+       "Болеутоляющие",
+       "Противовоспалительные",
+       "Антибиотики",
+       "Противовирусные",
+       "Противогрибковые",
+       "Противоаллергические",
+       "Антидепрессанты",
+       "Антипсихотики",
+       "Снотворные"
+    };
+
+    while (true) {
+        cout << "Введите назначение лекарства: ";
+        cin.ignore(); // Очищаем буфер ввода
+        getline(cin, med.purpose);
+
+        // Проверка, что введенное назначение является допустимым
+        if (find(validPurposes.begin(), validPurposes.end(), med.purpose) != validPurposes.end()) {
+            break; // Ввод корректен, выходим из цикла
+        }
+        else {
+            cout << "Ошибка: введенное назначение лекарства недопустимо. Пожалуйста, введите одно из следующих: " << endl;
+            for (const string& purpose : validPurposes) {
+                cout << purpose << endl;
+            }
+        }
+
+    }
+
+
     cout << "Требуется ли рецепт (1 - да, 0 - нет): ";
     cin >> med.prescription;
     cout << "Введите форму выпуска лекарства: ";
@@ -157,21 +275,6 @@ void deleteMedicine(vector<Medicine>& catalog, const string& name) {
 }
 
 
-// Запись данных в файл
-void saveToFile(const vector<Medicine>& catalog, const string& filename) {
-    ofstream file(filename);
-    if (!file) {
-        cerr << "Ошибка открытия файла для записи!" << endl;
-        return;
-    }
-    for (const auto& med : catalog) {
-        file << med.name << ";" << med.company << ";" << med.country << ";"
-            << med.purpose << ";" << med.prescription << ";" << med.form << endl;
-    }
-    file.close();
-    cout << "Данные успешно сохранены в файл." << endl;
-}
-
 // Функция для сохранения в новый файл с проверкой существования
 void saveToNewFile(const vector<Medicine>& catalog) {
     string filename;
@@ -179,50 +282,51 @@ void saveToNewFile(const vector<Medicine>& catalog) {
         cout << "Введите название файла для сохранения (с расширением .txt): ";
         cin >> filename;
 
-        // Добавляем расширение .txt, если его нет
+        // Проверка на наличие расширения .txt
         if (filename.find(".txt") == string::npos) {
-            filename += ".txt";
+            cout << "Ошибка: файл должен иметь расширение .txt." << endl;
+            continue; // Запрашиваем ввод заново
         }
 
         // Проверка существования файла
         if (fs::exists(filename)) {
             cout << "Файл \"" << filename << "\" уже существует." << endl;
-            cout << "1. Введите другое название файла." << endl;
-            cout << "2. Выйти без сохранения." << endl;
+            cout << "1. Перезаписать файл." << endl;
+            cout << "2. Ввести другое название файла." << endl;
+            cout << "3. Выйти без сохранения." << endl;
             int choice;
             cout << "Ваш выбор: ";
             cin >> choice;
 
-            if (choice == 2) {
+            if (choice == 3) {
                 cout << "Выход из меню сохранения..." << endl;
                 return;
             }
-            else if (choice == 1) {
+            else if (choice == 2) {
                 continue; // Возвращаемся к вводу нового названия файла
             }
-            else {
+            else if (choice != 1) {
                 cout << "Неверный ввод, попробуйте снова." << endl;
+                continue; // Запрашиваем ввод заново
             }
+        }
+
+        // Сохраняем в файл (или перезаписываем, если он существует)
+        ofstream file(filename);
+        if (!file) {
+            cerr << "Ошибка создания файла!" << endl;
         }
         else {
-            // Сохраняем в новый файл
-            ofstream file(filename);
-            if (!file) {
-                cerr << "Ошибка создания файла!" << endl;
+            for (const auto& med : catalog) {
+                file << med.name << ";" << med.company << ";" << med.country << ";"
+                    << med.purpose << ";" << med.prescription << ";" << med.form << endl;
             }
-            else {
-                for (const auto& med : catalog) {
-                    file << med.name << ";" << med.company << ";" << med.country << ";"
-                        << med.purpose << ";" << med.prescription << ";" << med.form << endl;
-                }
-                cout << "Данные успешно сохранены в файл \"" << filename << "\"." << endl;
-                file.close();
-            }
-            return;
+            cout << "Данные успешно сохранены в файл \"" << filename << "\"." << endl;
+            file.close();
         }
+        return;
     }
 }
-
 
 // Чтение данных из файла
 void loadFromFile(vector<Medicine>& catalog, const string& filename) {
@@ -320,11 +424,15 @@ void listMedicinesByCompany(const vector<Medicine>& catalog, const string& compa
     }
 }
 
-// Все болеутоляющие без рецепта
 void findPainkillersNoPrescription(const vector<Medicine>& catalog) {
     vector<Medicine> painkillers;
+
     for (const auto& med : catalog) {
-        if (med.purpose == "болеутоляющее" && !med.prescription) {
+        // Приводим строку к нижнему регистру для корректного сравнения
+        string purpose_lower = med.purpose;
+        transform(purpose_lower.begin(), purpose_lower.end(), purpose_lower.begin(), ::tolower);
+
+        if (purpose_lower == "болеутоляющее" && !med.prescription) {
             painkillers.push_back(med);
         }
     }
