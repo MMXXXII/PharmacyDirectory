@@ -28,6 +28,8 @@
 #include <windows.h>
 #include <regex>
 #include <limits>
+#include <cctype>
+
 using namespace std;
 namespace fs = std::filesystem; // Сокращение для удобства
 
@@ -67,164 +69,6 @@ bool isValidCountryName(const string& name) {
     return regex_match(name, regex(R"(^[A-ZА-ЯЁ][a-zа-яё]*(\s+[A-ZА-ЯЁ][a-zа-яё]*)*$)"));
 }
 
-
-void addNewMedicine(vector<Medicine>& catalog) {
-    Medicine med;
-    cin.ignore();
-    while (true) {
-        cout << "Введите название лекарства: ";
-        getline(cin, med.name);
-        med.name = trim(med.name); // Убираем пробелы
-
-        // Проверка на пустую строку
-        if (med.name.empty()) {
-            cout << "Ошибка: название лекарства не может быть пустым. Пожалуйста, введите название заново." << endl;
-            continue; // Запрашиваем ввод снова
-        }
-
-
-        // Проверка на корректность названия лекарства
-        if (isValidMedicineName(med.name)) {
-            catalog.push_back(med); // Добавляем лекарство в каталог
-            cout << "Лекарство успешно добавлено в каталог." << endl;
-            break; // Название лекарства корректно, выходим из цикла
-        }
-
-        else {
-            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы, а все остальные буквы — строчные. Пожалуйста, введите название заново." << endl;
-        }
-    }
-
-
-    // Ввод названия фирмы
-    do {
-        cout << "Введите название фирмы: ";
-        getline(cin, med.company);
-        med.company = trim(med.company); // Убираем пробелы
-
-        if (!isValidMedicineName(med.company)) {
-            cout << "Ошибка: название фирмы должно начинаться с заглавной буквы." << endl;
-        }
-    } while (!isValidMedicineName(med.company));
-
-    cout << "Фирма успешно добавлена в каталог" << endl;
-
-
-
-    do {
-        cout << "Введите название страны: ";
-        getline(cin, med.country); // Используем getline для ввода с пробелами
-        med.country = trim(med.country); // Убираем пробелы
-
-        if (!isValidCountryName(med.country)) {
-            cout << "Ошибка: название страны должно начинаться с заглавной буквы." << endl;
-        }
-    } while (!isValidCountryName(med.country));
-
-    cout << "Страна успешно добавлена в каталог." << endl;
-
-
-    vector<string> validPurposes = {
-        "Болеутоляющие",
-        "Противовоспалительные",
-        "Антибиотики",
-        "Противовирусные",
-        "Противогрибковые",
-        "Противоаллергические",
-        "Антидепрессанты",
-        "Антипсихотики",
-        "Снотворные"
-    };
-
-    while (true) {
-        cout << "Введите назначение лекарства (доступные варианты):" << endl;
-
-        // Вывод всех доступных вариантов
-        for (const auto& purpose : validPurposes) {
-            cout << "- " << purpose << endl;
-        }
-
-        // Запрос ввода
-        string input;
-        cout << "Ваш ввод: ";
-        getline(cin, input);
-
-        // Здесь можно добавить проверку на допустимость ввода
-        // Например, можно проверить, содержится ли введенное назначение в validPurposes
-
-        if (find(validPurposes.begin(), validPurposes.end(), input) != validPurposes.end()) {
-            cout << "Назначение успешно добавлено: " << input << endl;
-            break; // Выходим из цикла, если ввод корректен
-        }
-        else {
-            cout << "Ошибка: недопустимое назначение. Пожалуйста, попробуйте снова." << endl;
-        }
-    }
-
-
-    while (true) {
-        cout << "Требуется ли рецепт (1 - да, 0 - нет): ";
-        string input;
-        cin >> input; // Читаем ввод как строку
-
-        // Проверка на ввод цифры
-        if (input.length() != 1 || (input[0] != '0' && input[0] != '1')) {
-            cout << "Ошибка: введите 1 для 'да' или 0 для 'нет'." << endl;
-            cin.clear(); // Очищаем состояние cin
-            
-        }
-        else {
-            // Если ввод корректен, преобразуем строку в число
-            med.prescription = input[0] - '0'; // '0' -> 0, '1' -> 1
-            break; // Ввод корректен, выходим из цикла
-        }
-    }
-
-    cout << " " << endl;
-
-    vector<string> validForms = {
-        "Таблетки",
-        "Капсулы",
-        "Сироп",
-        "Раствор",
-        "Порошок",
-        "Суппозитории",
-        "Пластыри"
-    };
-
-    while (true) {
-        cout << "Введите форму выпуска лекарства (доступные варианты):" << endl;
-        for (const auto& form : validForms) {
-            cout << "- " << form << endl;
-        }
-
-        // Запрос ввода формы
-        cout << "Ваш ввод: ";
-        getline(cin >> ws, med.form); // Используем getline для ввода с пробелами и очищаем пробелы
-
-        // Проверка на допустимость введенной формы
-        bool valid = false;
-        for (const auto& validForm : validForms) {
-            if (med.form == validForm) {
-                valid = true;
-                break;
-            }
-        }
-
-        if (!valid) {
-            cout << "Ошибка: недопустимая форма выпуска. Пожалуйста, выберите из предложенных вариантов." << endl;
-        }
-        else {
-            break; // Форма введена корректно
-        }
-    }
-
-    catalog.push_back(med);
-    cout << "Лекарство успешно добавлено." << endl;
-}
-
-
-
 void printMedicineTable(const vector<Medicine>& catalog) {
     if (catalog.empty()) {
         cout << "Список лекарств пуст." << endl;
@@ -236,7 +80,7 @@ void printMedicineTable(const vector<Medicine>& catalog) {
     size_t max_company_length = 20;     // Максимальная длина для фирмы
     size_t max_country_length = 15;     // Максимальная длина для страны
     size_t max_purpose_length = 25;     // Максимальная длина для назначения
-    size_t max_form_length = 10;        // Максимальная длина для формы выпуска
+    size_t max_form_length = 12;        // Максимальная длина для формы выпуска
     size_t max_prescription_length = 15; // Максимальная длина для рецепта
 
     // Печать заголовка таблицы
@@ -264,6 +108,273 @@ void printMedicineTable(const vector<Medicine>& catalog) {
 
     cout << setfill(' ') << endl; // Дополнительная пустая строка в конце
 }
+
+void addNewMedicine(vector<Medicine>& catalog) {
+    Medicine med;
+    cin.ignore();
+
+    // Ввод названия лекарства
+    while (true) {
+        cout << "Введите название лекарства: ";
+        getline(cin, med.name);
+        med.name = trim(med.name);
+
+        if (med.name.empty()) {
+            cout << "Ошибка: название лекарства не может быть пустым. Пожалуйста, введите название заново." << endl;
+        }
+        else if (!isValidMedicineName(med.name)) {
+            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы, а остальные буквы должны быть строчными." << endl;
+        }
+        else {
+            cout << "Лекарство успешно добавлено в каталог." << endl;
+            break;
+        }
+    }
+
+    // Ввод названия фирмы
+    while (true) {
+        cout << "Введите название фирмы: ";
+        getline(cin, med.company);
+        med.company = trim(med.company);
+
+        if (!isValidMedicineName(med.company)) {
+            cout << "Ошибка: название фирмы должно начинаться с заглавной буквы." << endl;
+        }
+        else {
+            cout << "Фирма успешно добавлена в каталог." << endl;
+            break;
+        }
+    }
+
+    // Ввод названия страны
+    while (true) {
+        cout << "Введите название страны: ";
+        getline(cin, med.country);
+        med.country = trim(med.country);
+
+        if (!isValidCountryName(med.country)) {
+            cout << "Ошибка: название страны должно начинаться с заглавной буквы." << endl;
+        }
+        else {
+            cout << "Страна успешно добавлена в каталог." << endl;
+            break;
+        }
+    }
+
+    // Ввод назначения лекарства
+    vector<string> validPurposes = {
+        "Болеутоляющие", "Противовоспалительные", "Антибиотики", "Противовирусные",
+        "Противогрибковые", "Противоаллергические", "Антидепрессанты",
+        "Антипсихотики", "Снотворные"
+    };
+
+    while (true) {
+        cout << "Введите назначение лекарства (доступные варианты):" << endl;
+        for (const auto& purpose : validPurposes) {
+            cout << "- " << purpose << endl;
+        }
+
+        string input;
+        cout << "Ваш ввод: ";
+        getline(cin, input);
+
+        if (find(validPurposes.begin(), validPurposes.end(), input) != validPurposes.end()) {
+            med.purpose = input;
+            cout << "Назначение успешно добавлено: " << input << endl;
+            break;
+        }
+        else {
+            cout << "Ошибка: недопустимое назначение. Пожалуйста, попробуйте снова." << endl;
+        }
+    }
+
+    // Ввод информации о рецепте
+    while (true) {
+        cout << "Требуется ли рецепт (1 - да, 0 - нет): ";
+        string input;
+        cin >> input;
+
+        if (input == "0" || input == "1") {
+            med.prescription = input[0] - '0';
+            break;
+        }
+        else {
+            cout << "Ошибка: введите 1 для 'да' или 0 для 'нет'." << endl;
+        }
+    }
+
+    cin.ignore(); // Очистка буфера после ввода
+
+    // Ввод формы выпуска
+    vector<string> validForms = {
+    "Таблетки", "Капсулы", "Сироп", "Раствор", "Порошок", "Суппозитории", "Пластыри"
+    };
+
+    while (true) {
+        cout << "Выберите форму выпуска лекарства (введите номер):" << endl;
+        for (size_t i = 0; i < validForms.size(); ++i) {
+            cout << i + 1 << " - " << validForms[i] << endl;
+        }
+
+        string input;
+        cout << "Ваш выбор: ";
+        cin >> input;
+
+        // Проверка, является ли ввод числом
+        if (input.find_first_not_of("0123456789") != string::npos) {
+            cout << "Ошибка: введите число." << endl;
+            cin.clear(); // Сброс флага ошибки
+            cin.ignore(); // Очистка буфера ввода
+            continue;
+        }
+
+        int choice = stoi(input);
+
+        if (choice >= 1 && choice <= validForms.size()) {
+            med.form = validForms[choice - 1];
+            break;
+        }
+        else {
+            cout << "Ошибка: недопустимый номер. Пожалуйста, выберите из предложенных вариантов." << endl;
+            cin.clear(); // Сброс флага ошибки
+            cin.ignore(); // Очистка буфера ввода
+        }
+    }
+
+    catalog.push_back(med); // Добавляем лекарство в каталог
+
+    // Проверка введенных данных
+    bool dataEnteredCorrectly = false;
+    while (!dataEnteredCorrectly) {
+        printMedicineTable(catalog); // Печать таблицы с лекарствами
+
+        cout << endl << "Данные введены верно?" << endl;
+        cout << "1. Да" << endl;
+        cout << "2. Нет" << endl;
+
+        string input;
+        cout << "Ваш выбор: ";
+        cin >> input;
+        transform(input.begin(), input.end(), input.begin(), ::tolower);
+
+        if (input == "да" || input == "1") {
+            cout << "Лекарство успешно добавлено." << endl;
+            dataEnteredCorrectly = true;
+        }
+        else if (input == "нет" || input == "2") {
+            // Изменение данных лекарства
+            string fieldChoice;
+            cout << "Какой параметр вы хотите изменить?" << endl;
+            cout << "1. Название лекарства" << endl;
+            cout << "2. Название фирмы" << endl;
+            cout << "3. Название страны" << endl;
+            cout << "4. Назначение" << endl;
+            cout << "5. Требуется ли рецепт" << endl;
+            cout << "6. Форма выпуска" << endl;
+            cout << "Ваш выбор: ";
+            cin >> fieldChoice;
+
+            cin.ignore(); // Очистка буфера
+
+            if (fieldChoice == "1") {
+                while (true) {
+                    cout << "Введите новое название лекарства: ";
+                    getline(cin, med.name);
+                    med.name = trim(med.name);
+
+                    if (med.name.empty()) {
+                        cout << "Ошибка: название лекарства не может быть пустым. Пожалуйста, введите название заново." << endl;
+                    }
+                    else if (!isValidMedicineName(med.name)) {
+                        cout << "Ошибка: название лекарства должно начинаться с заглавной буквы, а остальные буквы должны быть строчными." << endl;
+                    }
+                    else {
+                        catalog.back().name = med.name; // Обновляем название в каталоге
+                        break;
+                    }
+                }
+            }
+            else if (fieldChoice == "2") {
+                while (true) {
+                    cout << "Введите новое название фирмы: ";
+                    getline(cin, med.company);
+                    med.company = trim(med.company);
+
+                    if (!isValidMedicineName(med.company)) {
+                        cout << "Ошибка: название фирмы должно начинаться с заглавной буквы." << endl;
+                    }
+                    else {
+                        catalog.back().company = med.company; // Обновляем название фирмы в каталоге
+                        break;
+                    }
+                }
+            }
+            else if (fieldChoice == "3") {
+                while (true) {
+                    cout << "Введите новое название страны: ";
+                    getline(cin, med.country);
+                    med.country = trim(med.country);
+
+                    if (!isValidCountryName(med.country)) {
+                        cout << "Ошибка: название страны должно начинаться с заглавной буквы." << endl;
+                    }
+                    else {
+                        catalog.back().country = med.country; // Обновляем название страны в каталоге
+                        break;
+                    }
+                }
+            }
+            else if (fieldChoice == "4") {
+                while (true) {
+                    cout << "Введите новое назначение лекарства: ";
+                    getline(cin, med.purpose);
+
+                    if (find(validPurposes.begin(), validPurposes.end(), med.purpose) != validPurposes.end()) {
+                        catalog.back().purpose = med.purpose; // Обновляем назначение в каталоге
+                        break;
+                    }
+                    else {
+                        cout << "Ошибка: недопустимое назначение. Пожалуйста, попробуйте снова." << endl;
+                    }
+                }
+            }
+            else if (fieldChoice == "5") {
+                while (true) {
+                    cout << "Требуется ли рецепт (1 - да, 0 - нет): ";
+                    string input;
+                    getline(cin, input);
+
+                    if (input == "0" || input == "1") {
+                        med.prescription = input[0] - '0';
+                        catalog.back().prescription = med.prescription; // Обновляем информацию о рецепте в каталоге
+                        break;
+                    }
+                    else {
+                        cout << "Ошибка: введите 1 для 'да' или 0 для 'нет'." << endl;
+                    }
+                }
+            }
+            else if (fieldChoice == "6") {
+                while (true) {
+                    cout << "Введите новую форму выпуска: ";
+                    getline(cin, med.form);
+                    med.form = trim(med.form);
+
+                    if (find(validForms.begin(), validForms.end(), med.form) != validForms.end()) {
+                        catalog.back().form = med.form; // Обновляем форму выпуска в каталоге
+                        break;
+                    }
+                    else {
+                        cout << "Ошибка: недопустимая форма выпуска. Пожалуйста, выберите из предложенных вариантов." << endl;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 
 void editMedicine(vector<Medicine>& catalog, const string& name) {
 
