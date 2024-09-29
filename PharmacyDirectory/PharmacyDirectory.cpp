@@ -29,6 +29,8 @@
 #include <regex>
 #include <limits>
 #include <cctype>
+#include <codecvt>
+
 
 
 using namespace std;
@@ -39,7 +41,7 @@ struct Medicine {
     string company;        // Фирма производитель
     string country;        // Страна производитель
     string purpose;        // Назначение
-    bool prescription;     // Требуется рецепт
+    string prescription;     // Требуется рецепт
     string form;           // Форма выпуска
 };
 
@@ -121,12 +123,44 @@ void printMedicineTable(const vector<Medicine>& catalog) {
             << setw(max_company_length) << left << catalog[i].company << " | "
             << setw(max_country_length) << left << catalog[i].country << " | "
             << setw(max_purpose_length) << left << catalog[i].purpose << " | "
-            << setw(max_prescription_length) << left << (catalog[i].prescription ? "Да" : "Нет") << " | "
+            << setw(max_prescription_length) << left << (catalog[i].prescription == "да" ? "Да" : "Нет") << " | "
             << setw(max_form_length) << left << catalog[i].form << endl;
     }
 
     cout << setfill(' ') << endl; // Дополнительная пустая строка в конце
 }
+
+
+
+bool isValidMedicineFirm(const string& name) {
+    if (name.empty()) return false;
+
+    // Проверка, что первая буква заглавная
+    if (!isupper(name[0])) return false;
+
+    bool allLowerAfterFirst = true;
+    bool allUpperAfterFirst = true;
+
+    for (size_t i = 1; i < name.size(); ++i) {
+        char c = name[i];
+
+        // Допустимые символы: только буквы
+        if (!isalpha(c)) return false;
+
+        // Проверка на строчные и заглавные буквы после первой
+        if (islower(c)) {
+            allUpperAfterFirst = false;
+        }
+        else {
+            allLowerAfterFirst = false;
+        }
+    }
+
+    // Либо все буквы после первой строчные, либо все заглавные
+    return allLowerAfterFirst || allUpperAfterFirst;
+}
+
+
 
 void addNewMedicine(vector<Medicine>& catalog) {
     Medicine med;
@@ -142,7 +176,7 @@ void addNewMedicine(vector<Medicine>& catalog) {
             cout << "Ошибка: название лекарства не может быть пустым. Пожалуйста, введите название заново." << endl;
         }
         else if (!isValidMedicineName(med.name)) {
-            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы, а остальные буквы должны быть строчными." << endl;
+            cout << "Ошибка: название лекарства должно начинаться с заглавной буквы, не иметь цифр и специальных знаков." << endl;
         }
         else {
             cout << "Лекарство успешно добавлено в каталог." << endl;
@@ -156,8 +190,8 @@ void addNewMedicine(vector<Medicine>& catalog) {
         getline(cin, med.company);
         med.company = trim(med.company);
 
-        if (!isValidMedicineName(med.company)) {
-            cout << "Ошибка: название фирмы должно начинаться с заглавной буквы." << endl;
+        if (!isValidMedicineFirm(med.company)) {
+            cout << "Ошибка: название фирмы должно начинаться с заглавной буквы, либо все буквы должны быть заглавными и не иметь цифр и специальных знаков" << endl;
         }
         else {
             cout << "Фирма успешно добавлена в каталог." << endl;
@@ -221,16 +255,14 @@ void addNewMedicine(vector<Medicine>& catalog) {
 
     // Ввод информации о рецепте
     while (true) {
-        cout << "Требуется ли рецепт (1 - да, 0 - нет): ";
-        string input;
-        cin >> input;
+        cout << "Требуется ли рецепт (Да/Нет): ";
+        cin >> med.prescription;
 
-        if (input == "0" || input == "1") {
-            med.prescription = input[0] - '0';
+        if (med.prescription == "Да" || med.prescription == "Нет") {
             break;
         }
         else {
-            cout << "Ошибка: введите 1 для 'да' или 0 для 'нет'." << endl;
+            cout << "Ошибка: введите 'Да' или 'Нет' с заглавной буквы." << endl;
         }
     }
 
@@ -680,39 +712,66 @@ void loadFromFile(vector<Medicine>& catalog, const string& filename) {
 
         // Чтение названия лекарства
         pos = line.find(';');
+        if (pos == string::npos) {
+            cerr << "Ошибка формата строки (нет разделителя ';'): " << line << endl;
+            continue;
+        }
         med.name = line.substr(0, pos);
         line.erase(0, pos + 1);
 
         // Чтение компании
         pos = line.find(';');
+        if (pos == string::npos) {
+            cerr << "Ошибка формата строки (нет разделителя ';'): " << line << endl;
+            continue;
+        }
         med.company = line.substr(0, pos);
         line.erase(0, pos + 1);
 
         // Чтение страны
         pos = line.find(';');
+        if (pos == string::npos) {
+            cerr << "Ошибка формата строки (нет разделителя ';'): " << line << endl;
+            continue;
+        }
         med.country = line.substr(0, pos);
         line.erase(0, pos + 1);
 
         // Чтение назначения
         pos = line.find(';');
+        if (pos == string::npos) {
+            cerr << "Ошибка формата строки (нет разделителя ';'): " << line << endl;
+            continue;
+        }
         med.purpose = line.substr(0, pos);
         line.erase(0, pos + 1);
 
         // Чтение рецепта (требуется или нет)
         pos = line.find(';');
-        string prescriptionStr = line.substr(0, pos);
-        med.prescription = (prescriptionStr == "Да");
+        if (pos == string::npos) {
+            cerr << "Ошибка формата строки (нет разделителя ';'): " << line << endl;
+            continue;
+        }
+        med.prescription = line.substr(0, pos); // Сохраняем как строку
         line.erase(0, pos + 1);
 
-        // Чтение формы выпуска
-        med.form = line;
+        // Чтение формы выпуска (последнее поле, не требуется разделитель)
+        if (!line.empty()) {
+            med.form = line;
+        }
+        else {
+            cerr << "Ошибка формата строки (форма выпуска отсутствует): " << line << endl;
+            continue;
+        }
 
+        // Добавление прочитанного лекарства в каталог
         catalog.push_back(med);
     }
 
     file.close();
     cout << "Данные успешно загружены из файла." << endl;
 }
+
 
 // Просмотр всех данных
 void displayAllMedicines(const vector<Medicine>& catalog) {
@@ -725,19 +784,24 @@ void displayAllMedicines(const vector<Medicine>& catalog) {
 }
 
 // Поиск лекарства по названию
-void findMedicineByName(const vector<Medicine>& catalog, const string& name) {
-    vector<Medicine> foundMedicines;
-    for (const auto& med : catalog) {
-        if (med.name == name) {
-            foundMedicines.push_back(med);
+void findMedicineByName(const vector<Medicine>& catalog, const string& searchName) {
+    string trimmedSearchName = trim(searchName);
+    vector<Medicine> foundMedicines; // Вектор для хранения найденных лекарств
+
+    for (const auto& medicine : catalog) {
+        if (medicine.name.find(trimmedSearchName) != string::npos) { // Поиск по частичному совпадению
+            foundMedicines.push_back(medicine); // Добавляем найденное лекарство в вектор
         }
     }
 
-    if (foundMedicines.empty()) {
-        cout << "Лекарство с названием \"" << name << "\" не найдено." << endl;
+    // Печатаем результаты
+    if (!foundMedicines.empty()) {
+        cout << "Найденные лекарства:" << endl;
+        cout << "-------------------" << endl;
+        printMedicineTable(foundMedicines); // Выводим найденные лекарства в виде таблицы
     }
     else {
-        printMedicineTable(foundMedicines); // Выводим найденные лекарства
+        cout << "Лекарство с названием \"" << trimmedSearchName << "\" не найдено." << endl;
     }
 }
 
@@ -759,25 +823,33 @@ void listMedicinesByCompany(const vector<Medicine>& catalog, const string& compa
     }
 }
 
-void findPainkillersNoPrescription(const vector<Medicine>& catalog) {
-    vector<Medicine> painkillers;
-    regex painkillerPattern("(болеутоляющие|анальгетик|обезболивающее)", regex_constants::icase); // Улучшенное регулярное выражение
+string toLowerCase(const string& str) {
+    string result = str;
+    locale loc("ru_RU.UTF-8");  // Устанавливаем локаль для работы с русскими буквами
+    for (auto& ch : result) {
+        ch = tolower(ch, loc);
+    }
+    return result;
+}
 
+void findPainkillersNoPrescription(const vector<Medicine>& catalog) {
+    vector<Medicine> filteredCatalog;
+
+    // Фильтрация лекарств
     for (const auto& med : catalog) {
-        // Проверяем, если лекарство болеутоляющее и не требует рецепта
-        if (regex_search(med.purpose, painkillerPattern) && !med.prescription) {
-            painkillers.push_back(med);
+        if (med.purpose == "Болеутоляющие" && (med.prescription == "Нет" || med.prescription == "нет")) {
+            filteredCatalog.push_back(med);
         }
     }
 
-    // Выводим результат
-    if (painkillers.empty()) {
-        cout << "Нет болеутоляющих средств без рецепта." << endl;
+    // Проверка, есть ли лекарства после фильтрации
+    if (filteredCatalog.empty()) {
+        cout << "Нет болеутоляющих без рецепта." << endl;
+        return;
     }
-    else {
-        cout << "Болеутоляющие средства без рецепта:" << endl;
-        printMedicineTable(painkillers); // Выводим найденные лекарства
-    }
+
+    // Вывод отфильтрованных лекарств с использованием существующей функции
+    printMedicineTable(filteredCatalog);
 }
 
 
@@ -810,9 +882,9 @@ void sortCatalog(vector<Medicine>& catalog, const string& field) {
 // Вывод информации о программе
 void aboutProgram() {
     cout << "Аптечный справочник v1.0\n";
-    cout << "Последние изменения: 25 сентября 2024\n";
-    cout << "Автор: Иван Иванов\n";
-    cout << "Контакты: ivan@example.com\n";
+    cout << "Последние изменения: September 2024\n";
+    cout << "Автор: Name Surname\n";
+    cout << "Контакты: ...\n";
 }
 
 // Загрузка руководства пользователя
@@ -883,6 +955,124 @@ string createFile() {
     }
 }
 
+
+void showSortFieldMenu(vector<Medicine>& catalog) {
+    int choice;
+    cout << "Выберите поле для сортировки:\n";
+    cout << "1. Название (name)\n";
+    cout << "2. Фирма (company)\n";
+    cout << "3. Страна (country)\n";
+    cout << "4. Назначение (purpose)\n";
+    cout << "5. Форма (form)\n";
+    cout << "0. Выход\n";
+
+    while (true) {
+        cout << "Ваш выбор: ";
+        cin >> choice;
+
+        // Check for invalid input
+        if (cin.fail()) {
+            cin.clear(); // Clear the error flag
+            cin.ignore(); // Discard invalid input
+            cout << "Пожалуйста, введите число." << endl;
+            cin.ignore();
+            continue; // Restart the loop
+        }
+
+        // Check the range of choice
+        if (choice < 0 || choice > 5) {
+            cout << "Неверный выбор. Попробуйте снова." << endl;
+            continue; // Restart the loop
+        }
+
+        string field;
+
+        switch (choice) {
+        case 1:
+            field = "name";
+            break;
+        case 2:
+            field = "company";
+            break;
+        case 3:
+            field = "country";
+            break;
+        case 4:
+            field = "purpose";
+            break;
+        case 5:
+            field = "form";
+            break;
+        case 0:
+            return; // Выход из меню
+        }
+
+        sortCatalog(catalog, field); // Вызываем функцию сортировки
+        break; // Exit the loop after valid input
+    }
+}
+
+bool dataSaved = false; // Flag to track if data has been saved
+
+// Function to save data (placeholder for your actual save logic)
+void saveData() {
+    // Your save logic goes here
+    dataSaved = true; // Mark data as saved
+    cout << "Данные сохранены." << endl;
+}
+
+// Function to check if data is saved before exiting
+bool confirmExit() {
+    char choice;
+    cout << "Вы не сохранили данные. Вы уверены, что хотите выйти? (y/n): ";
+    cin >> choice;
+
+    // Validate the choice
+    while (choice != 'y' && choice != 'n') {
+        cout << "Неверный выбор. Пожалуйста, введите 'y' или 'n': ";
+        cin >> choice;
+    }
+
+    return (choice == 'y'); // Return true if user wants to exit
+}
+
+void displayMedicineInfo(const vector<Medicine>& catalog, const string& name) {
+    // Определение максимальной длины для каждого столбца на основе заголовков
+    size_t max_name_length = 20;        // Максимальная длина для названия лекарства
+    size_t max_company_length = 20;     // Максимальная длина для фирмы
+    size_t max_country_length = 15;     // Максимальная длина для страны
+    size_t max_purpose_length = 25;     // Максимальная длина для назначения
+    size_t max_form_length = 12;        // Максимальная длина для формы выпуска
+
+    for (const auto& medicine : catalog) {
+        if (medicine.name == name) {
+            // Печать заголовка таблицы
+            cout << setfill(' ') << setw(2) << left << " " << " | "
+                << setw(max_name_length) << left << "Наименование" << " | "
+                << setw(max_company_length) << left << "Фирма" << " | "
+                << setw(max_country_length) << left << "Страна" << " | "
+                << setw(max_purpose_length) << left << "Назначение" << " | "
+                << setw(max_form_length) << left << "Форма" << endl;
+
+            // Печать разделителя
+            cout << setfill('-') << setw(2 + max_name_length + max_company_length +
+                max_country_length + max_purpose_length + max_form_length) << "-" << endl;
+
+            // Печать данных о лекарстве
+            cout << setfill(' ') << setw(2) << left << " " << " | "
+                << setw(max_name_length) << left << medicine.name << " | "
+                << setw(max_company_length) << left << medicine.company << " | "
+                << setw(max_country_length) << left << medicine.country << " | "
+                << setw(max_purpose_length) << left << medicine.purpose << " | "
+                << setw(max_form_length) << left << medicine.form << endl;
+
+            cout << setfill(' ') << endl; // Дополнительная пустая строка в конце
+            return;
+        }
+    }
+    cout << "Лекарство с названием \"" << name << "\" не найдено." << endl;
+}
+
 // Главное меню
 void mainMenu(vector<Medicine>& catalog) {
     string currentFilename;
@@ -895,13 +1085,14 @@ void mainMenu(vector<Medicine>& catalog) {
         cout << "4. Удалить лекарство\n";
         cout << "5. Просмотреть все лекарства\n";
         cout << "6. Найти лекарство по названию\n";
-        cout << "7. Сформировать перечень лекарств одной фирмы\n";
-        cout << "8. Найти болеутоляющие средства без рецепта\n";
-        cout << "9. Сортировка лекарств\n";
-        cout << "10. Сохранить в файл\n";
-        cout << "11. О программе\n";
-        cout << "12. Руководство пользователя\n";
-        cout << "13. Выход\n";
+        cout << "7. Выдать справочную информацию по наименованию лекарства\n"; // Новый пункт
+        cout << "8. Сформировать перечень лекарств одной фирмы\n";
+        cout << "9. Найти болеутоляющие средства без рецепта\n";
+        cout << "10. Сортировка лекарств\n";
+        cout << "11. Сохранить в файл\n";
+        cout << "12. О программе\n";
+        cout << "13. Руководство пользователя\n";
+        cout << "14. Выход\n"; // Изменил номер пункта "Выход"
         cout << "Выберите действие: ";
 
         int choice;
@@ -951,38 +1142,66 @@ void mainMenu(vector<Medicine>& catalog) {
             string name;
             cout << "Введите название лекарства для поиска: ";
             cin >> name;
-            findMedicineByName(catalog, name);
+
+            // Проверяем, было ли что-то введено
+            if (name.empty()) {
+                cout << "Название не было введено!" << endl;
+            }
+            else {
+                findMedicineByName(catalog, name);
+            }
             break;
         }
-        case 7: {
+        case 7: { // Новый пункт
+            string name;
+            cout << "Введите название лекарства для справочной информации: ";
+            cin >> name;
+
+            // Проверяем, было ли что-то введено
+            if (name.empty()) {
+                cout << "Название не было введено!" << endl;
+            }
+            else {
+                displayMedicineInfo(catalog, name); // Вызываем новую функцию
+            }
+            break;
+        }
+        case 8: {
             string company;
             cout << "Введите название фирмы: ";
             cin >> company;
             listMedicinesByCompany(catalog, company);
             break;
         }
-        case 8:
+        case 9:
             findPainkillersNoPrescription(catalog);
             break;
-        case 9: {
-            string field;
-            cout << "Введите поле для сортировки (name, company, country, purpose, form): ";
-            cin >> field;
-            sortCatalog(catalog, field);
+        case 10: {
+            showSortFieldMenu(catalog); // Вызываем меню сортировки
             break;
         }
-        case 10:
+        case 11:
             saveToNewFile(catalog);
             break;
-        case 11:
+        case 12:
             aboutProgram();
             break;
-        case 12:
+        case 13:
             loadUserGuide("C:\\Users\\PC\\Desktop\\Учеба\\Курсовой\\Делаю\\PharmacyDirectory\\PharmacyDirectory\\Руководство пользователя.txt");
             break;
-        case 13:
-            cout << "Выход из программы..." << endl;
-            return; // Завершение программы
+        case 14: { // Изменил номер пункта "Выход"
+            if (!dataSaved) {
+                if (confirmExit()) {
+                    cout << "Выход из программы..." << endl;
+                    return; // Завершение программы
+                }
+            }
+            else {
+                cout << "Выход из программы..." << endl;
+                return; // Завершение программы
+            }
+            break;
+        }
         default:
             cout << "Неверный ввод, попробуйте снова." << endl;
         }
@@ -990,17 +1209,22 @@ void mainMenu(vector<Medicine>& catalog) {
 }
 
 
+
 int main() {
 
-    cout << "Вариант 27" << endl;
-    cout << "27. Написать программу «Аптечный справочник», позволяющий найти"
-        "средство, например от головной боли.В справочнике должна содержаться информация : название лекарства, фирма и страна изготовитель, назначение(жаропонижающее, болеутоляющее и т.д.), отпускается по рецепту врача или нет,"
-        "форма выпуска(таблетки, капсулы, раствор и т.д.).Выдать справочную информацию по наименованию лекарства.Сформировать перечень лекарств одной"
-        "фирмы производителя.Найти все отпускаемые без рецепта врача болеутоляющие средства.";
 
-    setlocale(LC_ALL, "ru");
+    setlocale(LC_ALL, "Russian_Russia.1251");
     SetConsoleOutputCP(1251);
     SetConsoleCP(1251);
+
+    cout << "Вариант 27" << endl;
+    cout << "27. Написать программу «Аптечный справочник», позволяющий найти средство, например от"
+        "головной боли. В справочнике должна содержаться информация : название лекарства, фирма и страна изготовитель,"
+        "назначение(жаропонижающее, болеутоляющее и т.д.), отпускается по рецепту врача или нет, форма выпуска"
+        "(таблетки, капсулы, раствор и т.д.). Выдать справочную информацию по наименованию лекарства. Сформировать перечень"
+        "лекарств одной фирмы производителя. Найти все отпускаемые без рецепта врача болеутоляющие средства.";
+    cout << " " << endl;
+
     vector<Medicine> catalog;
     mainMenu(catalog);
     return 0;
